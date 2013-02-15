@@ -7,6 +7,9 @@ Author: Matthew Day
 */
 class Taxonomy_Widget extends WP_Widget 
 {
+	public static $TAX_DISPLAY = 2;
+	public static $PLACEHOLDER_IMG = "http://local.nodomain.com/noimage.png";
+	
 	var $widget_name = 'Taxonomy Widget';
 	var $id_base = 'taxonomy_widget';
 	
@@ -48,8 +51,7 @@ class Taxonomy_Widget extends WP_Widget
 	{
 		extract($args);
         extract($instance);
-	//$blh = is_widget();
-	//echo "<pre>"; print_r($instance); echo "</pre>AL";
+
 		$ctgy = NULL;
 
 		if($tw_specify)
@@ -63,16 +65,23 @@ class Taxonomy_Widget extends WP_Widget
 		}
 		
 		$cats = get_categories(array('child_of' => $ctgy));
-		$display = 1;
 		
 		$disp = array();
 		$drop = array();
 		
 		for($i=0; $i<count($cats); $i++)
 		{
-			if($i < $display)
+			if($i < self::$TAX_DISPLAY)
 			{
-				$disp[$cats[$i]->name] = array('link' => get_category_link($cats[$i]->term_id), 'desc' => $cats[$i]->category_descrption);
+				$args = array(
+					'post_type'=> "attachment",
+					'posts_per_page' => "1",
+					'order'    => 'DESC',
+					'category' => $cats[$i]->term_id
+				);
+				
+				$imgs = get_posts($args);
+				$disp[$cats[$i]->name] = array('link' => get_category_link($cats[$i]->term_id), 'desc' => $cats[$i]->category_descrption, 'img' => (!empty($imgs[0]->guid)) ? $imgs[0]->guid : self::$PLACEHOLDER_IMG);
 			}
 			else
 			{
@@ -84,7 +93,7 @@ class Taxonomy_Widget extends WP_Widget
 		
 		foreach($disp as $k => $d)
 		{
-			echo sprintf('<a href="%s">%s</a>%s<br />', $d['link'], $k, (($tw_description && !empty($d['desc'])) ? " - <span>" . $d['desc'] . "</span>" : ""));
+			echo sprintf('<img src="%s" /><a href="%s">%s</a>%s<br />', $d['img'], $d['link'], $k, (($tw_description && !empty($d['desc'])) ? " - <span>" . $d['desc'] . "</span>" : ""));
 		}
 				
 		if(!empty($drop) && $tw_dropdown)
