@@ -81,39 +81,48 @@ class Taxonomy_Widget extends WP_Widget
 				);
 				
 				$imgs = get_posts($args);
-				$disp[$cats[$i]->name] = array('link' => get_category_link($cats[$i]->term_id), 'desc' => $cats[$i]->category_descrption, 'img' => (!empty($imgs[0]->guid)) ? $imgs[0]->guid : self::$PLACEHOLDER_IMG);
+				$disp[$cats[$i]->name] = array('link' => get_category_link($cats[$i]->term_id), 'desc' => $cats[$i]->category_description, 'img' => (!empty($imgs[0]->guid)) ? $imgs[0]->guid : self::$PLACEHOLDER_IMG);
 			}
 			else
 			{
-				$drop[$cats[$i]->name] = array('link' => get_category_link($cats[$i]->term_id), 'desc' => $cats[$i]->category_descrption);
+				$drop[$cats[$i]->name] = array('link' => get_category_link($cats[$i]->term_id), 'desc' => $cats[$i]->category_description);
 			}
 		}
 		
 		echo $before_widget;
 		
-		foreach($disp as $k => $d)
+		$template = locate_template(array("taxonomy-$ctgy", "taxonomy-category", "taxonomy"));
+		
+		if(!empty($template))
 		{
-			echo sprintf('<img src="%s" /><a href="%s">%s</a>%s<br />', $d['img'], $d['link'], $k, (($tw_description && !empty($d['desc'])) ? " - <span>" . $d['desc'] . "</span>" : ""));
+		
 		}
-				
-		if(!empty($drop) && $tw_dropdown)
+		else
 		{
-			echo "<br />";
-			echo "<select>";
-			echo "<option value=\"\">--Click for More--</option>";
-			
-			foreach($drop as $k => $d)
+			foreach($disp as $k => $d)
 			{
-				if(empty($k))
+				echo sprintf('<img src="%s" /><a href="%s">%s</a>%s<br />', $d['img'], $d['link'], $k, (($tw_description && !empty($d['desc'])) ? " - <span>" . $d['desc'] . "</span>" : ""));
+			}
+					
+			if(!empty($drop) && $tw_dropdown)
+			{
+				echo "<br />";
+				echo "<select>";
+				echo "<option value=\"\">--Click for More--</option>";
+				
+				foreach($drop as $k => $d)
 				{
-					continue;
+					if(empty($k))
+					{
+						continue;
+					}
+					
+					echo sprintf('<option value="%s">%s</option>', $d['link'], $k);
 				}
 				
-				echo sprintf('<option value="%s">%s</option>', $d['link'], $k);
+				echo "</select>";
 			}
-			
-			echo "</select>";
-		}	
+		}
 	   
         echo $after_widget;
        
