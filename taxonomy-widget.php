@@ -7,7 +7,6 @@ Author: Matthew Day
 */
 class Taxonomy_Widget extends WP_Widget 
 {
-	public static $TAX_DISPLAY = 2;
 	public static $PLACEHOLDER_IMG = "http://local.nodomain.com/noimage.png";
 	
 	var $widget_name = 'Taxonomy Widget';
@@ -53,40 +52,53 @@ class Taxonomy_Widget extends WP_Widget
         extract($instance);
 
 		$ctgy = NULL;
+		$feat = (!empty($tw_featured)) ? $tw_featured : 0;
 
-		if($tw_specify)
-		{
-			$ctgy = $tw_category;
-		}
-		else
+		if(!$tw_specify)
 		{
 			$g = get_term_by("slug", get_query_var("category_name"), "category", "OBJECT");
 			$ctgy = $g->term_id;
 		}
-		
-		$cats = get_categories(array('child_of' => $ctgy));
+	
+		$cats = get_categories(array('taxonomy' => $tw_taxonomy));
+		$seld = array();
+	
+		if($tw_featured == "All")
+		{			
+			foreach($cats as $k)
+			{
+				$seld[] = $k->term_id;
+			}
+		}
+		else
+		{
+			$mt = (!empty($tw_featured)) ? $tw_featured : 0;
+			
+			for($i = 1; $i <= $mt; $i++)
+			{
+				eval('$seld[] = $tw_category_' . $i . ';');
+			}
+		}
 		
 		$disp = array();
 		$drop = array();
 		
-		for($i=0; $i<count($cats); $i++)
-		{
-			if($i < self::$TAX_DISPLAY)
+		foreach($cats as $k)
+		{			
+			if(in_array($k->term_id, $seld))
 			{
 				$args = array(
 					'post_type'=> "attachment",
 					'posts_per_page' => "1",
 					'order'    => 'DESC',
-					'category' => $cats[$i]->term_id
+					'category' => $k->term_id
 				);
 				
 				$imgs = get_posts($args);
-				$disp[$cats[$i]->name] = array('link' => get_category_link($cats[$i]->term_id), 'desc' => $cats[$i]->category_description, 'img' => (!empty($imgs[0]->guid)) ? $imgs[0]->guid : self::$PLACEHOLDER_IMG);
+				$disp[$k->name] = array('link' => get_category_link($k->term_id), 'desc' => $k->category_description, 'img' => (!empty($imgs[0]->guid)) ? $imgs[0]->guid : self::$PLACEHOLDER_IMG);
 			}
-			else
-			{
-				$drop[$cats[$i]->name] = array('link' => get_category_link($cats[$i]->term_id), 'desc' => $cats[$i]->category_description);
-			}
+			
+			$drop[$k->name] = array('link' => get_category_link($k->term_id), 'desc' => $k->category_description);
 		}
 		
 		echo $before_widget;
@@ -101,14 +113,19 @@ class Taxonomy_Widget extends WP_Widget
 		{
 			foreach($disp as $k => $d)
 			{
-				echo sprintf('<img src="%s" /><a href="%s">%s</a>%s<br />', $d['img'], $d['link'], $k, (($tw_description && !empty($d['desc'])) ? " - <span>" . $d['desc'] . "</span>" : ""));
+				echo sprintf('<div><img src="%s" /><a href="%s">%s</a>%s</div>', $d['img'], $d['link'], $k, (($tw_description && !empty($d['desc'])) ? " - <span>" . $d['desc'] . "</span>" : ""));
 			}
 					
 			if(!empty($drop) && $tw_dropdown)
 			{
+				$msg = (!empty($feat)) ? "More" : "Options";
+				
+				$sr = array();
+				$dk = array_keys($disp);
+				
 				echo "<br />";
 				echo "<select>";
-				echo "<option value=\"\">--Click for More--</option>";
+				echo "<option value=\"\">--Click for $msg--</option>";
 				
 				foreach($drop as $k => $d)
 				{
@@ -117,10 +134,21 @@ class Taxonomy_Widget extends WP_Widget
 						continue;
 					}
 					
+					if(!in_array($k, $dk))
+					{
+						$sr[] = $k;
+					}
+					
 					echo sprintf('<option value="%s">%s</option>', $d['link'], $k);
 				}
 				
 				echo "</select>";
+				
+				if(!empty($sr))
+				{
+					$sr = implode(";", $sr);
+					echo "<noscript>$sr</noscript>";
+				}
 			}
 		}
 	   
@@ -182,7 +210,7 @@ class Taxonomy_Widget extends WP_Widget
         // Merge saved input values with default values
         $instance = wp_parse_args((array) $instance, $defaults);
 		extract($instance);
-		
+				
 		$fields = array(
 			array(
 				'field_id'		=> "tw_dropdown",
@@ -197,16 +225,17 @@ class Taxonomy_Widget extends WP_Widget
 			array(
 				'field_id'		=> "tw_specify",
 				'type'			=> "checkbox",
-				'label'			=> "Taxonomy"
+				'label'			=> "Specify"
 			)
 		);
-				
+			
 		// if an override is specified, display the override select boxes
 		if($tw_specify)
 		{
+			$featured = (!empty($tw_featured)) ? $tw_featured : 1;
 			$tax = get_taxonomies(NULL, 'objects');
 			$opts = array();
-		
+			
 			foreach($tax as $t)
 			{
 				$opts[$t->name] = $t->name;
@@ -218,23 +247,42 @@ class Taxonomy_Widget extends WP_Widget
 				'label' => 'Taxonomy',
 				'options' => $opts
 			);
-		
+					
 			if($tw_taxonomy)
 			{
 				$cats = get_categories(array('taxonomy' => $tw_taxonomy));
-				$opts = array();
+				$mt = ($tw_featured == "All") ? 0 : $tw_featured;
+				
+				$opts = array();				
+				$fo = array();
+				$fo['All'] = "All";
+		
+				for($i = 1; $i <= 9; $i++)
+				{
+					$fo[$i] = $i;
+				}
+				
+				$fields[] = array(
+					'field_id' => 'tw_featured',
+					'type' => 'select',
+					'label' => 'Featured',
+					'options' => $fo
+				);
 				
 				foreach($cats as $a)
 				{
 					$opts[$a->term_id] = $a->name;
 				}
 				
-				$fields[] = array(
-					'field_id' => 'tw_category',
-					'type' => 'select',
-					'label' => 'Taxonomy',
-					'options' => $opts
-				);
+				for($i = 1; $i <= $mt; $i++)
+				{
+					$fields[] = array(
+						'field_id' => 'tw_category_' . $i,
+						'type' => 'select',
+						'label' => 'Subcat ' . $i,
+						'options' => $opts
+					);
+				}				
 			}
 		}
 
