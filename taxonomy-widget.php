@@ -8,6 +8,7 @@ Author: Matthew Day
 class Taxonomy_Widget extends WP_Widget 
 {
 	public static $PLACEHOLDER_IMG = "http://local.nodomain.com/noimage.png";
+	public static $TAX_PATH = "widgets/taxonomy_widget";
 	
 	var $widget_name = 'Taxonomy Widget';
 	var $id_base = 'taxonomy_widget';
@@ -48,7 +49,58 @@ class Taxonomy_Widget extends WP_Widget
      */
     public function widget( $args, $instance )
 	{
-		extract($args);
+		$detail = (!empty($instance['tw_featured']) && $instance['tw_featured'] == 1) ? TRUE : FALSE;
+
+		if($detail)
+		{
+			$this->taxDetail($args, $instance);
+		}
+		else
+		{
+			$this->taxList($args, $instance);
+		}
+    }
+
+    function taxRender(&$data, $tp, $bw, $aw)
+    {
+    	extract($data);
+
+		echo $bw;
+    	include($tp);
+    	echo $aw;
+    }
+
+    public function taxDetail(&$args, &$instance)
+    {
+    	extract($args);
+        extract($instance);
+        $data = array();
+
+		$feat = (!empty($tw_featured)) ? $tw_featured : 0;
+		$term = get_term($tw_category_1, $tw_taxonomy, "OBJECT");
+	
+		$args = array(
+					'post_type'=> "attachment",
+					'posts_per_page' => "1",
+					'order'    => 'DESC',
+					'category' => $k->term_id
+				);
+				
+		$imgs = get_posts($args);
+
+		$taxPath = "widgets/taxonomy_widget";			
+		$template = locate_template(array("$taxPath/taxonomy-featured.php"));
+
+		$data['list'] = FALSE;
+		$data['dtai'] = TRUE;
+		$data['info'] = $term;
+
+		$this->taxRender($data, $template, $before_widget, $after_widget);
+    }
+
+    public function taxList(&$args, &$instance)
+    {
+    	extract($args);
         extract($instance);
 
 		$ctgy = NULL;
@@ -79,9 +131,11 @@ class Taxonomy_Widget extends WP_Widget
 				eval('$seld[] = $tw_category_' . $i . ';');
 			}
 		}
-		
+
+		$data = array();
 		$disp = array();
 		$drop = array();
+		$sr = array();
 		
 		foreach($cats as $k)
 		{			
@@ -100,60 +154,34 @@ class Taxonomy_Widget extends WP_Widget
 			
 			$drop[$k->name] = array('link' => get_category_link($k->term_id), 'desc' => $k->category_description);
 		}
-		
-		echo $before_widget;
-		
-		$template = locate_template(array("taxonomy-$ctgy", "taxonomy-category", "taxonomy"));
-		
-		if(!empty($template))
+
+		$dk = array_keys($disp);
+
+		foreach($drop as $k => $d)
 		{
-		
-		}
-		else
-		{
-			foreach($disp as $k => $d)
+			if(empty($k))
 			{
-				echo sprintf('<div><img src="%s" /><a href="%s">%s</a>%s</div>', $d['img'], $d['link'], $k, (($tw_description && !empty($d['desc'])) ? " - <span>" . $d['desc'] . "</span>" : ""));
+				continue;
 			}
-					
-			if(!empty($drop) && $tw_dropdown)
+			
+			if(!in_array($k, $dk))
 			{
-				$msg = (!empty($feat)) ? "More" : "Options";
-				
-				$sr = array();
-				$dk = array_keys($disp);
-				
-				echo "<br />";
-				echo "<select>";
-				echo "<option value=\"\">--Click for $msg--</option>";
-				
-				foreach($drop as $k => $d)
-				{
-					if(empty($k))
-					{
-						continue;
-					}
-					
-					if(!in_array($k, $dk))
-					{
-						$sr[] = $k;
-					}
-					
-					echo sprintf('<option value="%s">%s</option>', $d['link'], $k);
-				}
-				
-				echo "</select>";
-				
-				if(!empty($sr))
-				{
-					$sr = implode(";", $sr);
-					echo "<noscript>$sr</noscript>";
-				}
+				$sr[] = $k;
 			}
 		}
-	   
-        echo $after_widget;
-       
+	
+		$template = locate_template(array(self::$TAX_PATH . "/taxonomy.php"));
+
+		$data['list'] = TRUE;
+		$data['dtai'] = FALSE;
+		$data['disp'] = $disp;
+		$data['drop'] = $drop;
+		$data['desc'] = $tw_description;
+		$data['dpdn'] = $tw_dropdown;
+		$data['ftxt'] = (!empty($feat)) ? "More" : "Options";
+		$data['nsts'] = implode(" : ", $sr);
+
+		$this->taxRender($data, $template, $before_widget, $after_widget);
     }
     
     /**
