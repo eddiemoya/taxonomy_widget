@@ -94,6 +94,8 @@ class Taxonomy_Widget extends WP_Widget
 		$data['list'] = FALSE;
 		$data['dtai'] = TRUE;
 		$data['info'] = $term;
+		$data['imgs'] = $imgs;
+		$data['post'] = get_post($term->term_id);
 
 		$this->taxRender($data, $template, $before_widget, $after_widget);
     }
@@ -138,7 +140,7 @@ class Taxonomy_Widget extends WP_Widget
 		$sr = array();
 		
 		foreach($cats as $k)
-		{			
+		{
 			if(in_array($k->term_id, $seld))
 			{
 				$args = array(
@@ -166,7 +168,7 @@ class Taxonomy_Widget extends WP_Widget
 			
 			if(!in_array($k, $dk))
 			{
-				$sr[] = $k;
+				$sr[$k] = $d;
 			}
 		}
 	
@@ -179,7 +181,7 @@ class Taxonomy_Widget extends WP_Widget
 		$data['desc'] = $tw_description;
 		$data['dpdn'] = $tw_dropdown;
 		$data['ftxt'] = (!empty($feat)) ? "More" : "Options";
-		$data['nsts'] = implode(" : ", $sr);
+		$data['nsts'] = $sr;
 
 		$this->taxRender($data, $template, $before_widget, $after_widget);
     }
