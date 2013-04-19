@@ -172,7 +172,7 @@ class Taxonomy_Widget extends WP_Widget
 			}
 		}
 	
-		$template = locate_template(array(self::$TAX_PATH . "/taxonomy.php"));
+		$template = locate_template(array(self::$TAX_PATH . "/taxonomy-$tw_list_style.php", self::$TAX_PATH . "/taxonomy.php"));
 
 		$data['list'] = TRUE;
 		$data['dtai'] = FALSE;
