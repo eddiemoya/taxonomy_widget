@@ -243,6 +243,15 @@ class Taxonomy_Widget extends WP_Widget
 				
 		$fields = array(
 			array(
+				'field_id'		=> "tw_list_style",
+				'type'			=> "select",
+				'label'			=> "Dropdown",
+				'options'		=> array(
+					'list'			=> "List",
+					'grid'			=> "Grid"
+				)
+			),
+			array(
 				'field_id'		=> "tw_dropdown",
 				'type'			=> "checkbox",
 				'label'			=> "Dropdown"
