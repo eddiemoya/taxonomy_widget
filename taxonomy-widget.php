@@ -78,12 +78,12 @@ class Taxonomy_Widget extends WP_Widget
 
 		$feat = (!empty($tw_featured)) ? $tw_featured : 0;
 		$term = get_term($tw_category_1, $tw_taxonomy, "OBJECT");
-	
+
 		$args = array(
 					'post_type'=> "attachment",
 					'posts_per_page' => "1",
 					'order'    => 'DESC',
-					'category' => $k->term_id
+					'category' => $term->term_id
 				);
 				
 		$imgs = get_posts($args);
