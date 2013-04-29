@@ -95,7 +95,7 @@ class Taxonomy_Widget extends WP_Widget
 		$data['dtai'] = TRUE;
 		$data['info'] = $term;
 		$data['imgs'] = $imgs;
-		$data['link'] = get_permalink($data['info']->term_id);
+		$data['link'] = get_term_link($term);
 
 		$this->taxRender($data, $template, $before_widget, $after_widget);
     }
