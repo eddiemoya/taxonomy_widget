@@ -152,13 +152,13 @@ class Taxonomy_Widget extends WP_Widget
 			
 				$parent = ($k->parent != 0) ? get_term($k->parent, $tw_taxonomy) : NULL;
 				$link = NULL;
-				
+			
 				if(class_exists("WP_Node") && $tw_list_style == "list")
 				{
-					$node = new WP_Node($k->term_id, 'skcategory');
+					$node = new WP_Node($k->term_id, "skcategory");
 					$catgroupid = $node->get_meta_data('catgroupid');
 					
-					$link = sprintf('http://www.sears.com/<parent-category><child-category>/cr-<catgroupid>?sName=View+All', ((!empty($parent)) ? $parent->slug . "-" : ""), $k->slug, $catgroupid);
+					$link = sprintf('http://www.sears.com/%s%s/cr-%s?sName=View+All', ((!empty($parent)) ? $parent->slug . "-" : ""), $k->slug, $catgroupid);
 				}
 				else
 				{
