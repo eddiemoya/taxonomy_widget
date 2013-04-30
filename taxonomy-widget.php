@@ -49,7 +49,7 @@ class Taxonomy_Widget extends WP_Widget
      */
     public function widget( $args, $instance )
 	{
-		$detail = (!empty($instance['tw_featured']) && $instance['tw_featured'] == 1 && $tw_specify) ? TRUE : FALSE;
+		$detail = (!empty($instance['tw_featured']) && $instance['tw_featured'] == 1 && $instance['tw_specify']) ? TRUE : FALSE;
 
 		if($detail)
 		{
@@ -107,7 +107,7 @@ class Taxonomy_Widget extends WP_Widget
 		extract($args);
         extract($instance);
 
-		$params = array('hide_empty' => FALSE);
+		$params = array('hide_empty' => TRUE);
 		$feat = (!empty($tw_featured)) ? $tw_featured : 0;
 
 		if(!$tw_specify)
@@ -118,7 +118,7 @@ class Taxonomy_Widget extends WP_Widget
 	
 		$cats = get_terms($tw_taxonomy, $params);
 		$seld = array();
-	
+
 		if($tw_featured == "All")
 		{			
 			foreach($cats as $k)
