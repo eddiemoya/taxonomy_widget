@@ -111,7 +111,7 @@ class Taxonomy_Widget extends WP_Widget
 		if(!$tw_specify)
 		{
 			$g = get_term_by("slug", get_query_var("category_name"), $tw_taxonomy, "OBJECT");
-			$params = array('child_of' => $g->term_id);
+			$params['child_of'] = $g->term_id;
 		}
 	
 		$cats = get_categories($params);
