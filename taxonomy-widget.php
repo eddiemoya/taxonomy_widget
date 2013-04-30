@@ -105,16 +105,16 @@ class Taxonomy_Widget extends WP_Widget
     	extract($args);
         extract($instance);
 
-		$ctgy = NULL;
+		$params = array('taxonomy' => $tw_taxonomy);
 		$feat = (!empty($tw_featured)) ? $tw_featured : 0;
 
 		if(!$tw_specify)
 		{
-			$g = get_term_by("slug", get_query_var("category_name"), "category", "OBJECT");
-			$ctgy = $g->term_id;
+			$g = get_term_by("slug", get_query_var("category_name"), $tw_taxonomy, "OBJECT");
+			$params = array('child_of' => $g->term_id);
 		}
 	
-		$cats = get_categories(array('taxonomy' => $tw_taxonomy));
+		$cats = get_categories($params);
 		$seld = array();
 	
 		if($tw_featured == "All")
@@ -141,7 +141,7 @@ class Taxonomy_Widget extends WP_Widget
 		
 		foreach($cats as $k)
 		{
-			if(in_array($k->term_id, $seld))
+			if(in_array($k->term_id, $seld) || $tw_list_style == "list")
 			{
 				$args = array(
 					'post_type'=> "attachment",
@@ -149,9 +149,24 @@ class Taxonomy_Widget extends WP_Widget
 					'order'    => 'DESC',
 					'category' => $k->term_id
 				);
+			
+				$parent = ($k->parent != 0) ? get_term($k->parent, $tw_taxonomy) : NULL;
+				$link = NULL;
+				
+				if(class_exists("WP_Node") && $tw_list_style == "list")
+				{
+					$node = new WP_Node($k->term_id, 'skcategory');
+					$catgroupid = $node->get_meta_data('catgroupid');
+					
+					$link = sprintf('http://www.sears.com/<parent-category><child-category>/cr-<catgroupid>?sName=View+All', ((!empty($parent)) ? $parent->slug . "-" : ""), $k->slug, $catgroupid);
+				}
+				else
+				{
+					$link = get_category_link($k->term_id);
+				}
 				
 				$imgs = get_posts($args);
-				$disp[$k->name] = array('link' => get_category_link($k->term_id), 'desc' => $k->category_description, 'img' => (!empty($imgs[0]->guid)) ? $imgs[0]->guid : self::$PLACEHOLDER_IMG);
+				$disp[$k->name] = array('link' => $link, 'desc' => $k->category_description, 'img' => (!empty($imgs[0]->guid)) ? $imgs[0]->guid : self::$PLACEHOLDER_IMG);
 			}
 			
 			$drop[$k->name] = array('link' => get_category_link($k->term_id), 'desc' => $k->category_description);
@@ -240,6 +255,14 @@ class Taxonomy_Widget extends WP_Widget
         // Merge saved input values with default values
         $instance = wp_parse_args((array) $instance, $defaults);
 		extract($instance);
+		
+		$tax = get_taxonomies(NULL, 'objects');
+		$opts = array();
+		
+		foreach($tax as $t)
+		{
+			$opts[$t->name] = $t->name;
+		}
 				
 		$fields = array(
 			array(
@@ -265,6 +288,12 @@ class Taxonomy_Widget extends WP_Widget
 				'field_id'		=> "tw_specify",
 				'type'			=> "checkbox",
 				'label'			=> "Specify"
+			),
+			array(
+				'field_id' => 'tw_taxonomy',
+				'type' => 'select',
+				'label' => 'Taxonomy',
+				'options' => $opts
 			)
 		);
 			
@@ -272,20 +301,6 @@ class Taxonomy_Widget extends WP_Widget
 		if($tw_specify)
 		{
 			$featured = (!empty($tw_featured)) ? $tw_featured : 1;
-			$tax = get_taxonomies(NULL, 'objects');
-			$opts = array();
-			
-			foreach($tax as $t)
-			{
-				$opts[$t->name] = $t->name;
-			}
-
-			$fields[] = array(
-				'field_id' => 'tw_taxonomy',
-				'type' => 'select',
-				'label' => 'Taxonomy',
-				'options' => $opts
-			);
 					
 			if($tw_taxonomy)
 			{
