@@ -49,7 +49,7 @@ class Taxonomy_Widget extends WP_Widget
      */
     public function widget( $args, $instance )
 	{
-		$detail = (!empty($instance['tw_featured']) && $instance['tw_featured'] == 1) ? TRUE : FALSE;
+		$detail = (!empty($instance['tw_featured']) && $instance['tw_featured'] == 1 && $tw_specify) ? TRUE : FALSE;
 
 		if($detail)
 		{
@@ -102,19 +102,21 @@ class Taxonomy_Widget extends WP_Widget
 
     public function taxList(&$args, &$instance)
     {
-    	extract($args);
+		global $wp_query;
+    	
+		extract($args);
         extract($instance);
 
-		$params = array('taxonomy' => $tw_taxonomy);
+		$params = array('hide_empty' => FALSE);
 		$feat = (!empty($tw_featured)) ? $tw_featured : 0;
 
 		if(!$tw_specify)
 		{
-			$g = get_term_by("slug", get_query_var("category_name"), $tw_taxonomy, "OBJECT");
+			$g = get_term_by("slug", $wp_query->tax_query->queries[0]['terms'][0], $tw_taxonomy, "OBJECT");
 			$params['child_of'] = $g->term_id;
 		}
 	
-		$cats = get_categories($params);
+		$cats = get_terms($tw_taxonomy, $params);
 		$seld = array();
 	
 		if($tw_featured == "All")
@@ -258,7 +260,7 @@ class Taxonomy_Widget extends WP_Widget
 		
 		$tax = get_taxonomies(NULL, 'objects');
 		$opts = array();
-		
+	
 		foreach($tax as $t)
 		{
 			$opts[$t->name] = $t->name;
@@ -304,7 +306,7 @@ class Taxonomy_Widget extends WP_Widget
 					
 			if($tw_taxonomy)
 			{
-				$cats = get_categories(array('taxonomy' => $tw_taxonomy));
+				$cats = get_terms($tw_taxonomy);
 				$mt = ($tw_featured == "All") ? 0 : $tw_featured;
 				
 				$opts = array();				
