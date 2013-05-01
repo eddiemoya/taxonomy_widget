@@ -107,16 +107,17 @@ class Taxonomy_Widget extends WP_Widget
 		extract($args);
         extract($instance);
 
-		$params = array('hide_empty' => TRUE);
+		$params = array('hide_empty' => false);
 		$feat = (!empty($tw_featured)) ? $tw_featured : 0;
 
 		if(!$tw_specify)
 		{
 			$g = get_term_by("slug", $wp_query->tax_query->queries[0]['terms'][0], $tw_taxonomy, "OBJECT");
-			$params['child_of'] = $g->term_id;
+			$params['parent'] = $g->term_id;
 		}
 	
 		$cats = get_terms($tw_taxonomy, $params);
+		echo "<pre>";print_r($get);echo "</pre>";
 		$seld = array();
 
 		if($tw_featured == "All")
@@ -157,7 +158,8 @@ class Taxonomy_Widget extends WP_Widget
 			
 				if(class_exists("WP_Node") && $tw_list_style == "list")
 				{
-					$node = new WP_Node($k->term_id, "skcategory");
+					$node = new WP_Node($k->term_id, $tw_taxonomy);
+					echo "<pre>";print_r($node);echo "</pre>";
 					$catgroupid = $node->get_meta_data('catgroupid');
 					
 					$link = sprintf('http://www.sears.com/%s%s/cr-%s?sName=View+All', ((!empty($parent)) ? $parent->slug . "-" : ""), $k->slug, $catgroupid);
